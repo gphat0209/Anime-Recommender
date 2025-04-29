@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+
+<head>
+    <title>Movie Recommendation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.dataTables.css" />
+    <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
+    <style>
+        /* Dots animation */
+        .lds-ellipsis {
+            display: inline-block;
+            position: relative;
+            width: 64px;
+            height: 20px;
+        }
+        .lds-ellipsis div {
+            position: absolute;
+            top: 9px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #fff;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .lds-ellipsis div:nth-child(1) {
+            left: 6px;
+            animation: lds-ellipsis1 0.6s infinite;
+        }
+        .lds-ellipsis div:nth-child(2) {
+            left: 6px;
+            animation: lds-ellipsis2 0.6s infinite;
+        }
+        .lds-ellipsis div:nth-child(3) {
+            left: 26px;
+            animation: lds-ellipsis2 0.6s infinite;
+        }
+        .lds-ellipsis div:nth-child(4) {
+            left: 45px;
+            animation: lds-ellipsis3 0.6s infinite;
+        }
+        @keyframes lds-ellipsis1 {
+            0% {
+                transform: scale(0);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        @keyframes lds-ellipsis3 {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(0);
+            }
+        }
+        @keyframes lds-ellipsis2 {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(19px, 0);
+            }
+        }
+    </style>
+    <script>
+        function getEvaluation() {
+      const synopsis = document.getElementById("synopsis").value;
+      const genres = document.getElementById("genres").value;
+      const loading = document.getElementById("loading");
+      const result = document.getElementById("result");
+
+      loading.classList.remove("hidden");
+      result.innerHTML = "";
+
+      fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ synopsis, genres })
+      })
+      .then(res => res.json())
+      .then(data => {
+        loading.classList.add("hidden");
+        if (data.label) {
+          result.innerHTML = `<p class="text-xl text-green-400">Rating: <strong>${data.label}</strong></p>
+                            <p class="text-md text-gray-300 mt-2">${data.message}</p>`;
+        } else {
+          result.innerHTML = `<p class="text-red-400">Error: ${data.error}</p>`;
+        }
+      })
+      .catch(err => {
+        loading.classList.add("hidden");
+        result.innerHTML = `<p class="text-red-400">Something went wrong.</p>`;
+      });
+    }
+    </script>
+</head>
+
+<body class="bg-gray-800 flex justify-center items-center h-screen">
+    <div class="container mx-auto px-4 md:px-8 py-8 bg-gray-900 rounded-md shadow-lg w-full max-w-screen-lg">
+        <h1 class="text-4xl lg:text-5xl font-bold text-center mb-8">
+            <span class="text-indigo-400">Movie</span>
+            <span class="text-blue-500">Recommendation System</span>
+        </h1>
+        
+        <!-- Loading Animation -->
+        <div id="loading" class="flex justify-center items-center mb-4 hidden">
+            <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+
+        <div class="flex mt-4">
+            <input type="text" id="movie_input" class="flex-1 p-4 rounded-l-lg border-t mr-2 focus:outline-none focus:border-blue-500 text-lg lg:text-xl" placeholder="Enter a movie name">
+            <button onclick="getRecommendations()" class="p-4 rounded-r-lg bg-blue-500 text-white text-lg lg:text-xl transition duration-300 ease-in-out transform hover:scale-105">Recommend</button>
+        </div>
+        
+        <h3 class="text-xl text-white mt-4">Recommended Movies:</h3>
+        <ul id="recommendations" class="text-white text-lg mt-2"></ul>
+    </div>
+</body>
+
+</html>
