@@ -6,7 +6,8 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
-from pyngrok import ngrok
+from utils import load_document_store
+# from pyngrok import ngrok
 
 app = FastAPI()
 templates = Jinja2Templates(directory='templates')  
@@ -22,6 +23,21 @@ labels = ['Top-tier', 'Worthwhile', 'Watchable', 'Terrible']
 class AnimeInput(BaseModel):
     synopsis: str  
     genres: str
+
+class QueryInput(BaseModel):
+    sypnosis: str
+
+retriever, document_store = load_document_store("./training_data/short_file.json")
+
+def find_similar_anime(user_synopsis: str, top_k=5):
+    results = retriever.retrieve(query=user_synopsis, top_k=top_k)
+    return [
+        {
+            "title": doc.meta["title"],
+            "genres": doc.meta["genres"],
+        }
+        for doc in results
+    ]
 
 @app.get('/', response_class=HTMLResponse)
 async def root(request: Request):
@@ -47,14 +63,17 @@ async def predict(input: AnimeInput):
         'label': labels[prediction],
         'message': f"I think this anime is {labels[prediction]}"
     }
-    
 
-public_url = ngrok.connect(8000)
-print("FastAPI app is live at:", public_url)
+@app.post("/similar")
+def get_similar_anime(input:QueryInput):
+    return {"results: ": find_similar_anime(input.synopsis)} 
 
-# Run the FastAPI app
-import uvicorn
-uvicorn.run(app, host="0.0.0.0", port=8000)
+# public_url = ngrok.connect(8000)
+# print("FastAPI app is live at:", public_url)
+
+# # Run the FastAPI app
+# import uvicorn
+# uvicorn.run(app, host="0.0.0.0", port=8000)
     
     
     

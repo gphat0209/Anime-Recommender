@@ -38,6 +38,21 @@ Based on this information, classify the anime strictly as one of the following: 
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def get_jsonDes(df, des_path):
+    short_df = df[['Sypnosis', 'Genres', 'Name']]
+
+    data = []
+    for _,row in df.iterrows():        
+        data.append({
+                'title': row['Name'],
+                'sypnosis': row['Sypnosis'],
+                'genres': row['Genres']
+            })
+        
+    with open(des_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
 get_prompt(train_df, data_dir+'train.json')
 get_prompt(valid_df, data_dir+'valid.json')
 get_prompt(test_df, data_dir+'test.json')
+get_jsonDes(df,'short_file.json')
